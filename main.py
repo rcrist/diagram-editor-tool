@@ -10,6 +10,8 @@ from Shapes.Line import Line
 from Shapes.Text import Text
 from Shapes.Image import Image
 
+from GUI.LeftDock import LeftDock
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -20,14 +22,14 @@ class MainWindow(QMainWindow):
         self.scene = QGraphicsScene(self)
         self.scene.setSceneRect(0, 0, 1000, 500)
 
-        # Add a shape item to the scene
-        self.shape_item = Image(50, 50, 100, 100)
-        self.scene.addItem(self.shape_item)
-
         # Create a QGraphicsView, set the scene, and set as central widget
         self.view = QGraphicsView(self.scene, self)
         self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.setCentralWidget(self.view)       
+        self.setCentralWidget(self.view)
+
+        # Left Dock (Shapes)
+        self.left_dock = LeftDock(self, self.scene, self.view)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.left_dock)       
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
