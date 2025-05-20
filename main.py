@@ -3,13 +3,6 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import sys
 
-from Shapes.Rectangle import Rectangle
-from Shapes.Ellipse import Ellipse
-from Shapes.Triangle import Triangle
-from Shapes.Line import Line
-from Shapes.Text import Text
-from Shapes.Image import Image
-
 from GUI.LeftDock import LeftDock
 
 class MainWindow(QMainWindow):

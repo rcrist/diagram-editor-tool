@@ -40,13 +40,9 @@ class LeftDock(QDockWidget):
         self.rect_button.clicked.connect(lambda: self.add_shape("rectangle"))
         self.ellipse_button.clicked.connect(lambda: self.add_shape("ellipse"))
         self.triangle_button.clicked.connect(lambda: self.add_shape("triangle"))
-        self.line_button.clicked.connect(self.activate_line_draw_mode)
+        self.line_button.clicked.connect(lambda: self.add_shape("line"))
         self.text_button.clicked.connect(lambda: self.add_shape("text"))
         self.image_button.clicked.connect(lambda: self.add_shape("image"))
-
-    def activate_line_draw_mode(self):
-        if self.view:
-            self.view.set_draw_line_mode(True)
 
     def add_shape(self, shape_type):
         if not self.scene:
