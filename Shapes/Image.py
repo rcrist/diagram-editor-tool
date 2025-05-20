@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from Shapes.BaseShapeItem import BaseShapeItem
 
-class Image(QGraphicsPixmapItem):
+class Image(QGraphicsPixmapItem, BaseShapeItem):
     def __init__(self, x, y, w, h, image_path=None):
         super().__init__()
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)

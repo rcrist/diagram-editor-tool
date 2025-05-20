@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from Shapes.BaseShapeItem import BaseShapeItem
 
-class Line(QGraphicsLineItem):
+class Line(QGraphicsLineItem, BaseShapeItem):
     def __init__(self, x1, y1, x2, y2):
         super().__init__(x1, y1, x2, y2)
         self.setPen(QPen(Qt.GlobalColor.white, 3))
