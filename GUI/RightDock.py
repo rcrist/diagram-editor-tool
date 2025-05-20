@@ -2,7 +2,6 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from GUI.GridScene import *
-# from BaseShapeItem import BaseShapeItem
 
 class RightDock(QDockWidget):
     def __init__(self, parent=None):

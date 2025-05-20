@@ -6,12 +6,16 @@ import sys
 from GUI.LeftDock import LeftDock
 from GUI.RightDock import RightDock
 from GUI.DiagramView import DiagramView
+from GUI.MenuBar import MenuBar
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Digram Editor Tool")
         self.setGeometry(200, 100, 1200, 600)
+
+        # Add MenuBar
+        self.setMenuBar(MenuBar(self))
 
         # Create a QGraphicsScene
         self.scene = QGraphicsScene(self)
