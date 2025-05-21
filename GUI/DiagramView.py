@@ -70,6 +70,13 @@ class DiagramView(QGraphicsView):
                     snapped_pos = snap_to_grid(pos)
                     if pos != snapped_pos:
                         item.setPos(snapped_pos)
+                    # Update x and y in the shape class if attributes exist
+                    if hasattr(item, 'x') and hasattr(item, 'y'):
+                        try:
+                            item.x = item.pos().x()
+                            item.y = item.pos().y()
+                        except Exception:
+                            pass
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
