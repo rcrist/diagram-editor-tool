@@ -18,5 +18,14 @@ class GridScene(QGraphicsScene):
         painter.setPen(QPen(GRID_COLOR, 1))
         painter.drawLines(lines)
 
-def snap_to_grid(value):
-    return round(value / GRID_SIZE) * GRID_SIZE
+def snap_to_grid(point, grid_size=20):
+    # If point is QPointF or QPoint
+    if hasattr(point, 'x') and hasattr(point, 'y'):
+        x = round(point.x() / grid_size) * grid_size
+        y = round(point.y() / grid_size) * grid_size
+        return QPointF(x, y)
+    # If point is a number (int or float)
+    elif isinstance(point, (int, float)):
+        return round(point / grid_size) * grid_size
+    else:
+        raise TypeError("snap_to_grid expects QPointF, QPoint, int, or float")

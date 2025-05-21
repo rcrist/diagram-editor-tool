@@ -10,13 +10,15 @@ from Shapes.Text import Text
 from Shapes.Image import Image
 
 class DiagramView(QGraphicsView):
-    def __init__(self, scene, right_dock):
-        super().__init__(scene)
+    def __init__(self, scene, right_dock, parent=None):
+        super().__init__(scene, parent)
         self.right_dock = right_dock
         self.current_item = None
         self.drawing_line = False
         self.temp_line = None
         self.line_start = None
+        self.grid_visible = True
+        self.snap_enabled = True
         self.scene().selectionChanged.connect(self.on_selection_changed)
 
     def on_selection_changed(self):
@@ -59,27 +61,47 @@ class DiagramView(QGraphicsView):
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if self.drawing_line and self.temp_line:
-            raw_end = self.mapToScene(event.pos())
-            # Snap end point to grid
-            snapped_end = QPointF(snap_to_grid(raw_end.x()), snap_to_grid(raw_end.y()))
-            self.temp_line.setLine(QLineF(self.line_start, snapped_end))
-        else:
-            super().mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
+        if self.snap_enabled:
+            for item in self.scene().selectedItems():
+                if hasattr(item, 'setPos') and hasattr(item, 'pos'):
+                    pos = item.pos()
+                    snapped_pos = snap_to_grid(pos)
+                    if pos != snapped_pos:
+                        item.setPos(snapped_pos)
 
     def mouseReleaseEvent(self, event):
-        if self.drawing_line and self.temp_line and event.button() == Qt.MouseButton.LeftButton:
-            raw_end = self.mapToScene(event.pos())
-            # Snap end point to grid
-            snapped_end = QPointF(snap_to_grid(raw_end.x()), snap_to_grid(raw_end.y()))
-            final_line = Line(QLineF(self.line_start, snapped_end))
-            final_line.setPos(0, 0)
-            self.scene().addItem(final_line)
-            final_line.setSelected(True)
-            self.scene().removeItem(self.temp_line)
-            self.temp_line = None
-            self.line_start = None
-            # Optionally, exit draw mode after one line:
-            self.set_draw_line_mode(False)
-        else:
-            super().mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
+        if self.snap_enabled:
+            for item in self.scene().selectedItems():
+                if hasattr(item, 'setPos'):
+                    pos = item.pos()
+                    snapped_pos = snap_to_grid(pos)
+                    item.setPos(snapped_pos)
+                if hasattr(item, 'rect') and hasattr(item, 'setRect'):
+                    rect = item.rect()
+                    snapped_rect = QRectF(
+                        snap_to_grid(rect.topLeft()),
+                        snap_to_grid(rect.bottomRight())
+                    )
+                    item.setRect(snapped_rect)
+
+    def drawBackground(self, painter, rect):
+        super().drawBackground(painter, rect)
+        if self.grid_visible:
+            # Draw grid lines
+            left = int(rect.left())
+            right = int(rect.right())
+            top = int(rect.top())
+            bottom = int(rect.bottom())
+            grid_size = 10
+            painter.setPen(QPen(QColor(100, 100, 100), 1))
+            for x in range(left - left % grid_size, right, grid_size):
+                painter.drawLine(x, top, x, bottom)
+            for y in range(top - top % grid_size, bottom, grid_size):
+                painter.drawLine(left, y, right, y)
+
+    def toggle_grid(self):
+        self.grid_visible = not self.grid_visible
+        self.snap_enabled = self.grid_visible
+        self.viewport().update()
