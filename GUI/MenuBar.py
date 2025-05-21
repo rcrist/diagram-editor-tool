@@ -14,6 +14,7 @@ import json
 class MenuBar(QMenuBar):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.isDarkMode = True
 
         # File Menu
         file_menu = self.addMenu("File")
@@ -58,10 +59,19 @@ class MenuBar(QMenuBar):
         )
 
     def toggle_theme(self):
+        self.isDarkMode = not self.isDarkMode
+
+        main_window = self.parent()
+        if hasattr(main_window, "view"):
+            if self.isDarkMode:
+                main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.black))
+            else:
+                main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.white))
+
         # Simple dark/light mode toggle using QApplication palette
         app = QApplication.instance()
         palette = app.palette()
-        if palette.color(QPalette.ColorRole.Window) == QColor(53, 53, 53):
+        if not self.isDarkMode:
             # Switch to light mode
             app.setPalette(QApplication.style().standardPalette())
             # Set menubar and menu drop downs to light mode
@@ -77,10 +87,10 @@ class MenuBar(QMenuBar):
         else:
             # Switch to dark mode
             dark_palette = QPalette()
-            dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.ColorRole.Window, QColor(0, 0, 0))
             dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.Base, QColor(35, 35, 35))
-            dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0))
+            dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(0, 0, 0))
             dark_palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
             dark_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
             dark_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
@@ -93,7 +103,7 @@ class MenuBar(QMenuBar):
             # Set menubar and menu drop downs to dark mode
             self.setStyleSheet("""
                 QMenuBar, QMenu, QMenuBar::item, QMenu::item {
-                    background: #353535;
+                    background: #000000;
                     color: #fff;
                 }
                 QMenuBar::item:selected, QMenu::item:selected {
@@ -328,9 +338,16 @@ class MenuBar(QMenuBar):
         if not hasattr(main_window, "view"):
             QMessageBox.information(self, "Print", "Nothing to print.")
             return
-        # Hide grid before printing if it exists
+
         view = getattr(main_window, "view", None)
-        view.grid_visible = False
+        scene = getattr(main_window, "scene", None)
+
+        # Hide grid before printing if it exists
+        if hasattr(view, "grid_visible"):
+            old_grid_visible = view.grid_visible
+            view.grid_visible = False
+        else:
+            old_grid_visible = None
 
         printer = QPrinter()
         dialog = QPrintDialog(printer, self)
@@ -340,4 +357,5 @@ class MenuBar(QMenuBar):
             painter.end()
 
         # Restore grid visibility
-        view.grid_visible = True
+        if old_grid_visible is not None:
+            view.grid_visible = old_grid_visible

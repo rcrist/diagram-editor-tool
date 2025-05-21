@@ -5,7 +5,7 @@ from GUI.GridScene import *
 
 class BaseShapeItem:
     def __init__(self):
-            self.setFlags(
+        self.setFlags(
             QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable |
             QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable |
             QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges

@@ -86,13 +86,6 @@ class DiagramView(QGraphicsView):
                     pos = item.pos()
                     snapped_pos = snap_to_grid(pos)
                     item.setPos(snapped_pos)
-                if hasattr(item, 'rect') and hasattr(item, 'setRect'):
-                    rect = item.rect()
-                    snapped_rect = QRectF(
-                        snap_to_grid(rect.topLeft()),
-                        snap_to_grid(rect.bottomRight())
-                    )
-                    item.setRect(snapped_rect)
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
