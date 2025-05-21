@@ -18,12 +18,12 @@ class MenuBar(QMenuBar):
 
         # Edit Menu
         edit_menu = self.addMenu("Edit")
-        edit_menu.addAction("Undo")
-        edit_menu.addAction("Redo")
-        edit_menu.addSeparator()
-        edit_menu.addAction("Cut")
-        edit_menu.addAction("Copy")
-        edit_menu.addAction("Paste")
+        cut_action = edit_menu.addAction("Cut")
+        cut_action.triggered.connect(self.cut)
+        copy_action = edit_menu.addAction("Copy")
+        copy_action.triggered.connect(self.copy)
+        paste_action = edit_menu.addAction("Paste")
+        paste_action.triggered.connect(self.paste)
 
         # Settings Menu
         settings_menu = self.addMenu("Settings")
@@ -95,3 +95,24 @@ class MenuBar(QMenuBar):
             main_window.view.toggle_grid()
         else:
             QMessageBox.information(self, "Toggle Grid", "Grid toggling is not implemented in the view.")
+
+    def cut(self):
+        main_window = self.parent()
+        if hasattr(main_window, "view") and hasattr(main_window.view, "cut"):
+            main_window.view.cut()
+        else:
+            QMessageBox.information(self, "Cut", "Cut operation is not implemented in the view.")
+
+    def copy(self):
+        main_window = self.parent()
+        if hasattr(main_window, "view") and hasattr(main_window.view, "copy"):
+            main_window.view.copy()
+        else:
+            QMessageBox.information(self, "Copy", "Copy operation is not implemented in the view.")
+
+    def paste(self):
+        main_window = self.parent()
+        if hasattr(main_window, "view") and hasattr(main_window.view, "paste"):
+            main_window.view.paste()
+        else:
+            QMessageBox.information(self, "Paste", "Paste operation is not implemented in the view.")

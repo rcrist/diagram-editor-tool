@@ -10,6 +10,7 @@ from Shapes.Text import Text
 from Shapes.Image import Image
 
 class DiagramView(QGraphicsView):
+    clipboard_items = []
     def __init__(self, scene, right_dock, parent=None):
         super().__init__(scene, parent)
         self.right_dock = right_dock
@@ -105,3 +106,68 @@ class DiagramView(QGraphicsView):
         self.grid_visible = not self.grid_visible
         self.snap_enabled = self.grid_visible
         self.viewport().update()
+
+    def cut(self):
+            self.copy()
+            for item in self.scene().selectedItems():
+                self.scene().removeItem(item)
+
+    def copy(self):
+        DiagramView.clipboard_items = []
+        for item in self.scene().selectedItems():
+            # Basic serialization: store type and geometry
+            if isinstance(item, Rectangle):
+                DiagramView.clipboard_items.append(('Rectangle', item.rect(), item.pos(), item.brush().color()))
+            elif isinstance(item, Ellipse):
+                DiagramView.clipboard_items.append(('Ellipse', item.rect(), item.pos(), item.brush().color()))
+            elif isinstance(item, Triangle):
+                DiagramView.clipboard_items.append(('Triangle', item.polygon(), item.pos(), item.brush().color()))
+            elif isinstance(item, Line):
+                DiagramView.clipboard_items.append(('Line', item.line(), item.pos(), item.pen().color()))
+            elif isinstance(item, Text):
+                rect = item.boundingRect()
+                DiagramView.clipboard_items.append(('Text', item.toPlainText(), rect, item.pos()))
+            elif isinstance(item, Image):
+                rect = item.boundingRect()
+                DiagramView.clipboard_items.append(('Image', item.pixmap(), rect, item.pos()))
+
+    def paste(self):
+        pasted_items = []
+        offset = QPointF(20, 20)  # Offset pasted items so they're visible
+        for data in DiagramView.clipboard_items:
+            item_type = data[0]
+            if item_type == 'Rectangle':
+                rect, pos, color = data[1], data[2], data[3]
+                new_item = Rectangle(rect.x(), rect.y(), rect.width(), rect.height())
+                new_item.setBrush(QBrush(color))
+                new_item.setPos(pos + offset)
+            elif item_type == 'Ellipse':
+                rect, pos, color = data[1], data[2], data[3]
+                new_item = Ellipse(rect.x(), rect.y(), rect.width(), rect.height())
+                new_item.setBrush(QBrush(color))
+                new_item.setPos(pos + offset)
+            elif item_type == 'Triangle':
+                polygon, pos, color = data[1], data[2], data[3]
+                new_item = Triangle(rect.x(), rect.y(), rect.width(), rect.height())
+                new_item.setBrush(QBrush(color))
+                new_item.setPos(pos + offset)
+            elif item_type == 'Line':
+                line, pos, color = data[1], data[2], data[3]
+                new_item = Line(line.x1(), line.y1(), line.x2(), line.y2())
+                new_item.setPen(QPen(color))
+                new_item.setPos(pos + offset)
+            elif item_type == 'Text':
+                text, rect, pos = data[1], data[2], data[3]
+                new_item = Text(rect.x(), rect.y(), rect.width(), rect.height())
+                new_item.setPos(pos + offset)
+            elif item_type == 'Image':
+                pixmap, rect, pos = data[1], data[2], data[3]
+                new_item = Image(rect.x(), rect.y(), rect.width(), rect.height(), pixmap)
+                new_item.setPos(pos + offset)
+            else:
+                continue
+            self.scene().addItem(new_item)
+            pasted_items.append(new_item)
+        # Select newly pasted items
+        for item in pasted_items:
+            item.setSelected(True)
