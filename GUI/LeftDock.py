@@ -49,21 +49,16 @@ class LeftDock(QDockWidget):
             return
 
         shape_map = {
-            "rectangle": (Rectangle, (50, 50, 100, 100)),
-            "ellipse": (Ellipse, (50, 50, 100, 100)),
-            "triangle": (Triangle, (50, 50, 100, 100)),
+            "rectangle": (Rectangle, (100, 50, 100, 100)),
+            "ellipse": (Ellipse, (100, 50, 100, 100)),
+            "triangle": (Triangle, (100, 50, 100, 100)),
             "line": (Line, (50, 50, 100, 100)),
-            "text": (Text, (50, 50, 100, 100)),
-            "image": (Image, (50, 50, 100, 100)),
+            "text": (Text, (100, 100)),
+            "image": (Image, (100, 50, 100, 100)),
         }
 
         if shape_type in shape_map:
             shape_class, args = shape_map[shape_type]
             item = shape_class(*args)
-            # Adjust position for line if needed
-            if shape_type == "line":
-                item.setPos(snap_to_grid(50), snap_to_grid(80))
-            else:
-                item.setPos(snap_to_grid(50), snap_to_grid(50))
             self.scene.addItem(item)
             item.setSelected(True)

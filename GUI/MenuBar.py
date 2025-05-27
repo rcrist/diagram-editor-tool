@@ -3,18 +3,21 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from GUI.GridScene import *
+from Shapes.Image import Image
 from Shapes.Rectangle import Rectangle
 from Shapes.Ellipse import Ellipse
 from Shapes.Triangle import Triangle
-from Shapes.Line import Line
 from Shapes.Text import Text
-from Shapes.Image import Image
+from Shapes.Line import Line
 import json
+
+is_dark_mode = True
+rotation_snap_angle = 15
 
 class MenuBar(QMenuBar):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.isDarkMode = True
+        self.is_grid_enabled = True
 
         # File Menu
         file_menu = self.addMenu("File")
@@ -30,115 +33,114 @@ class MenuBar(QMenuBar):
         exit_action = file_menu.addAction("Exit")
         exit_action.triggered.connect(QApplication.instance().quit)
 
-        # Edit Menu
-        edit_menu = self.addMenu("Edit")
-        cut_action = edit_menu.addAction("Cut")
-        cut_action.triggered.connect(self.cut)
-        copy_action = edit_menu.addAction("Copy")
-        copy_action.triggered.connect(self.copy)
-        paste_action = edit_menu.addAction("Paste")
-        paste_action.triggered.connect(self.paste)
-
         # Settings Menu
         settings_menu = self.addMenu("Settings")
         toggle_grid_action = settings_menu.addAction("Toggle Grid")
         toggle_grid_action.triggered.connect(self.toggle_grid)
         toggle_theme_action = settings_menu.addAction("Toggle Theme")
         toggle_theme_action.triggered.connect(self.toggle_theme)
-
-        # Help Menu
-        help_menu = self.addMenu("Help")
-        about_action = help_menu.addAction("About")
-        about_action.triggered.connect(self.show_about_dialog)
-
-    def show_about_dialog(self):
-        QMessageBox.about(
-            self,
-            "About Diagram Editor Tool",
-            "Diagram Editor Tool\nVersion 1.0\n\nA simple diagram editor built with PyQt6."
-        )
+        set_rotation_snap_action = settings_menu.addAction("Set Rotation Snap")
+        set_rotation_snap_action.triggered.connect(self.set_rotation_snap)
 
     def toggle_theme(self):
-        self.isDarkMode = not self.isDarkMode
+        global is_dark_mode
+        is_dark_mode = not is_dark_mode
 
-        main_window = self.parent()
-        if hasattr(main_window, "view"):
-            if self.isDarkMode:
-                main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.black))
-            else:
-                main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.white))
-
-        # Simple dark/light mode toggle using QApplication palette
-        app = QApplication.instance()
-        palette = app.palette()
-        if not self.isDarkMode:
-            # Switch to light mode
-            app.setPalette(QApplication.style().standardPalette())
-            # Set menubar and menu drop downs to light mode
-            self.setStyleSheet("""
-                QMenuBar, QMenu, QMenuBar::item, QMenu::item {
-                    background: #f0f0f0;
-                    color: #000;
-                }
-                QMenuBar::item:selected, QMenu::item:selected {
-                    background: #d0d0d0;
-                }
-            """)
+        if is_dark_mode:
+            self.apply_dark_theme()
         else:
-            # Switch to dark mode
-            dark_palette = QPalette()
-            dark_palette.setColor(QPalette.ColorRole.Window, QColor(0, 0, 0))
-            dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0))
-            dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(0, 0, 0))
-            dark_palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-            dark_palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-            dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
-            dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
-            app.setPalette(dark_palette)
-            # Set menubar and menu drop downs to dark mode
-            self.setStyleSheet("""
-                QMenuBar, QMenu, QMenuBar::item, QMenu::item {
-                    background: #000000;
-                    color: #fff;
-                }
-                QMenuBar::item:selected, QMenu::item:selected {
-                    background: #2a82da;
-                }
-            """)
+            self.apply_light_theme()
+
+    def apply_dark_theme(self):
+        app = QApplication.instance()
+        dark_palette = QPalette()
+        dark_palette.setColor(QPalette.ColorRole.Window, QColor(0, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(0, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
+        app.setPalette(dark_palette)
+        self.setStyleSheet("""
+            QMenuBar, QMenu, QMenuBar::item, QMenu::item {
+                background: #000000;
+                color: #fff;
+            }
+            QMenuBar::item:selected, QMenu::item:selected {
+                background: #2a82da;
+            }
+        """)
+
+        # Set canvas (scene/view) background to black
+        import GUI.Grid
+        GUI.Grid.GRID_BG_COLOR = Qt.GlobalColor.black
+        main_window = self.parent()
+        if hasattr(main_window, "scene"):
+            main_window.scene.setBackgroundBrush(QBrush(Qt.GlobalColor.black))
+            main_window.scene.update()
+        if hasattr(main_window, "view"):
+            main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.black))
+            main_window.view.viewport().update()
+
+    def apply_light_theme(self):
+        app = QApplication.instance()
+        app.setPalette(QApplication.style().standardPalette())
+        self.setStyleSheet("""
+            QMenuBar, QMenu, QMenuBar::item, QMenu::item {
+                background: #f0f0f0;
+                color: #000;
+            }
+            QMenuBar::item:selected, QMenu::item:selected {
+                background: #d0d0d0;
+            }
+        """)
+
+        # Set canvas (scene/view) background to white
+        import GUI.Grid
+        GUI.Grid.GRID_BG_COLOR = Qt.GlobalColor.white
+        main_window = self.parent()
+        if hasattr(main_window, "scene"):
+            main_window.scene.setBackgroundBrush(QBrush(Qt.GlobalColor.white))
+            main_window.scene.update()
+        if hasattr(main_window, "view"):
+            main_window.view.setBackgroundBrush(QBrush(Qt.GlobalColor.white))
+            main_window.view.viewport().update()
 
     def toggle_grid(self):
-        # Toggle grid visibility in the scene if it supports it
-        main_window = self.parent()
-        if hasattr(main_window, "view") and hasattr(main_window.view, "toggle_grid"):
-            main_window.view.toggle_grid()
-        else:
-            QMessageBox.information(self, "Toggle Grid", "Grid toggling is not implemented in the view.")
+        import GUI.Grid
+        global rotation_snap_angle
 
-    def cut(self):
-        main_window = self.parent()
-        if hasattr(main_window, "view") and hasattr(main_window.view, "cut"):
-            main_window.view.cut()
-        else:
-            QMessageBox.information(self, "Cut", "Cut operation is not implemented in the view.")
+        GUI.Grid.IS_GRID_ENABLED = not GUI.Grid.IS_GRID_ENABLED
 
-    def copy(self):
-        main_window = self.parent()
-        if hasattr(main_window, "view") and hasattr(main_window.view, "copy"):
-            main_window.view.copy()
+        # Set rotation snap to 1 if grid is off, restore to default if grid is on
+        if not GUI.Grid.IS_GRID_ENABLED:
+            rotation_snap_angle = 1
         else:
-            QMessageBox.information(self, "Copy", "Copy operation is not implemented in the view.")
+            rotation_snap_angle = 15  # or keep a backup of the previous value if you want to restore user setting
 
-    def paste(self):
+        # Optionally, update the view to refresh the grid
         main_window = self.parent()
-        if hasattr(main_window, "view") and hasattr(main_window.view, "paste"):
-            main_window.view.paste()
-        else:
-            QMessageBox.information(self, "Paste", "Paste operation is not implemented in the view.")
+        if hasattr(main_window, "view"):
+            main_window.view.viewport().update()
+
+    def set_rotation_snap(self):
+        global rotation_snap_angle
+        angle, ok = QInputDialog.getInt(
+            self,
+            "Set Rotation Snap",
+            "Enter rotation snap angle (degrees):",
+            value=rotation_snap_angle,
+            min=1,
+            max=360
+        )
+        if ok:
+            rotation_snap_angle = angle
 
     def new_file(self):
         main_window = self.parent()
@@ -182,155 +184,36 @@ class MenuBar(QMenuBar):
                 QMessageBox.warning(self, "Save", f"Failed to save file:\n{e}")
 
     def serialize_item(self, item):
-        # Rectangle
         if isinstance(item, Rectangle):
-            rect = item.rect()
-            color = item.brush().color()
-            pos = item.pos()
-            return {
-                "type": "rect",
-                "x": rect.x(),
-                "y": rect.y(),
-                "w": rect.width(),
-                "h": rect.height(),
-                "color": color.name(QColor.NameFormat.HexArgb),
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
-        # Ellipse
+            return item.to_dict()
         if isinstance(item, Ellipse):
-            rect = item.rect()
-            color = item.brush().color()
-            pos = item.pos()
-            return {
-                "type": "ellipse",
-                "x": rect.x(),
-                "y": rect.y(),
-                "w": rect.width(),
-                "h": rect.height(),
-                "color": color.name(QColor.NameFormat.HexArgb),
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
-        # Triangle (polygon version)
+            return item.to_dict()
         if isinstance(item, Triangle):
-            rect = item.rect()
-            color = item.brush().color()
-            pos = item.pos()
-            return {
-                "type": "triangle",
-                "x": rect.x(),
-                "y": rect.y(),
-                "w": rect.width(),
-                "h": rect.height(),
-                "color": color.name(QColor.NameFormat.HexArgb),
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
-        # Line
-        if isinstance(item, Line):
-            line = item.line()
-            color = item.pen().color()
-            pos = item.pos()
-            return {
-                "type": "line",
-                "x1": line.x1(),
-                "y1": line.y1(),
-                "x2": line.x2(),
-                "y2": line.y2(),
-                "color": color.name(QColor.NameFormat.HexArgb),
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
-        # Text
+            return item.to_dict()
         if isinstance(item, Text):
-            rect = item.boundingRect()
-            pos = item.pos()
-            return {
-                "type": "text",
-                "x": rect.x(),
-                "y": rect.y(),
-                "w": rect.width(),
-                "h": rect.height(),
-                "text": item.toPlainText(),
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
-        # Image
+            return item.to_dict()
         if isinstance(item, Image):
-            rect = item.boundingRect()
-            pos = item.pos()
-            # Save image as base64 string
-            pixmap = item.pixmap()
-            ba = QByteArray()
-            buffer = QBuffer(ba)
-            buffer.open(QBuffer.OpenModeFlag.WriteOnly)
-            pixmap.save(buffer, "PNG")
-            img_b64 = ba.toBase64().data().decode()
-            return {
-                "type": "image",
-                "x": rect.x(),
-                "y": rect.y(),
-                "w": rect.width(),
-                "h": rect.height(),
-                "image_data": img_b64,
-                "pos_x": pos.x(),
-                "pos_y": pos.y()
-            }
+            return item.to_dict()
+        if isinstance(item, Line):
+            return item.to_dict()
         return None
 
     def deserialize_item(self, data):
         if not data:
             return None
-        pos_x = data.get("pos_x", 0)
-        pos_y = data.get("pos_y", 0)
-        if data.get("type") == "rect":
-            x, y, w, h = data["x"], data["y"], data["w"], data["h"]
-            color = QColor(data["color"])
-            item = Rectangle(x, y, w, h)
-            item.setBrush(QBrush(color))
-            item.setPos(pos_x, pos_y)
-            return item
-        if data.get("type") == "ellipse":
-            x, y, w, h = data["x"], data["y"], data["w"], data["h"]
-            color = QColor(data["color"])
-            item = Ellipse(x, y, w, h)
-            item.setBrush(QBrush(color))
-            item.setPos(pos_x, pos_y)
-            return item
-        if data.get("type") == "triangle":
-            x, y, w, h = data["x"], data["y"], data["w"], data["h"]
-            color = QColor(data["color"])
-            item = Triangle(x, y, w, h)
-            item.setBrush(QBrush(color))
-            item.setPos(pos_x, pos_y)
-            return item
-        if data.get("type") == "line":
-            x1, y1, x2, y2 = data["x1"], data["y1"], data["x2"], data["y2"]
-            color = QColor(data["color"])
-            item = Line(x1, y1, x2, y2)
-            item.setPen(QPen(color))
-            item.setPos(pos_x, pos_y)
-            return item
-        if data.get("type") == "text":
-            x, y, w, h = data["x"], data["y"], data["w"], data["h"]
-            text = data.get("text", "")
-            item = Text(x, y, w, h)
-            item.setPlainText(text)
-            item.setPos(pos_x, pos_y)
-            return item
-        if data.get("type") == "image":
-            from PyQt6.QtGui import QPixmap
-            import base64
-            x, y, w, h = data["x"], data["y"], data["w"], data["h"]
-            img_b64 = data.get("image_data", "")
-            pixmap = QPixmap()
-            if img_b64:
-                ba = QByteArray.fromBase64(img_b64.encode())
-                pixmap.loadFromData(ba, "PNG")
-            item = Image(x, y, w, h, pixmap)
-            item.setPos(pos_x, pos_y)
-            return item
+        t = data.get("type", "")
+        if t == "rectangle":
+            return Rectangle.from_dict(data)
+        if t == "ellipse":
+            return Ellipse.from_dict(data)
+        if t == "triangle":
+            return Triangle.from_dict(data)
+        if t == "text":
+            return Text.from_dict(data)
+        if t == "image":
+            return Image.from_dict(data)
+        if t == "line":
+            return Line.from_dict(data)
         return None
     
     def print_diagram(self):
